@@ -1,0 +1,90 @@
+package com.walletsystem.wallet_management_system.auth.service.impl;
+
+import com.walletsystem.wallet_management_system.auth.dto.LoginRequest;
+import com.walletsystem.wallet_management_system.auth.dto.LoginResponse;
+import com.walletsystem.wallet_management_system.auth.dto.SignupRequest;
+import com.walletsystem.wallet_management_system.auth.service.AuthService;
+import com.walletsystem.wallet_management_system.exception.BusinessException;
+import com.walletsystem.wallet_management_system.exception.InvalidCredentialsException;
+import com.walletsystem.wallet_management_system.group.entity.Group;
+import com.walletsystem.wallet_management_system.group.repository.GroupPermissionRepository;
+import com.walletsystem.wallet_management_system.group.repository.GroupRepository;
+import com.walletsystem.wallet_management_system.security.JwtUtil;
+import com.walletsystem.wallet_management_system.user.entity.User;
+import com.walletsystem.wallet_management_system.user.repository.UserRepository;
+import lombok.RequiredArgsConstructor;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.stream.Collectors;
+
+@Service
+@RequiredArgsConstructor
+@Transactional
+public class AuthServiceImpl implements AuthService {
+
+    private final UserRepository userRepository;
+    private final GroupRepository groupRepository;
+    private final GroupPermissionRepository groupPermissionRepository;
+    private final PasswordEncoder passwordEncoder;
+    private final JwtUtil jwtUtil;
+
+    @Override
+    public LoginResponse signup(SignupRequest request) {
+        if (userRepository.existsByEmail(request.getEmail())) {
+            throw new BusinessException("Email already exists: " + request.getEmail());
+        }
+
+        User user = new User();
+        user.setName(request.getName());
+        user.setEmail(request.getEmail());
+        user.setPassword(passwordEncoder.encode(request.getPassword()));
+
+        if (request.getGroupId() != null) {
+            Group group = groupRepository.findById(request.getGroupId())
+                    .orElseThrow(() -> new BusinessException("Group not found with id: " + request.getGroupId()));
+            user.setGroup(group);
+        }
+
+        userRepository.save(user);
+
+        List<String> roles = getUserRoles(user);
+        String token = jwtUtil.generateToken(user.getEmail(), roles);
+
+        return new LoginResponse(token, user.getId(), user.getEmail(), user.getName());
+    }
+
+    @Override
+    public LoginResponse login(LoginRequest request) {
+        User user = userRepository.findByEmail(request.getEmail())
+                .orElseThrow(() -> new InvalidCredentialsException("Invalid email or password"));
+
+        if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
+            throw new InvalidCredentialsException("Invalid email or password");
+        }
+
+        List<String> roles = getUserRoles(user);
+        String token = jwtUtil.generateToken(user.getEmail(), roles);
+
+        return new LoginResponse(token, user.getId(), user.getEmail(), user.getName());
+    }
+
+    @Override
+    public void logout(String token) {
+        // For JWT stateless authentication, logout is handled client-side by deleting the token
+        // Server-side token blacklisting can be implemented if needed
+    }
+
+    private List<String> getUserRoles(User user) {
+        if (user.getGroup() == null) {
+            return List.of("USER");
+        }
+
+        return groupPermissionRepository.findByGroupId(user.getGroup().getId())
+                .stream()
+                .map(gp -> gp.getPermission().getName())
+                .collect(Collectors.toList());
+    }
+}
