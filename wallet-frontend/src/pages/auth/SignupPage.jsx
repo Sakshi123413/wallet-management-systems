@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Wallet, Shield, Users, CreditCard, TrendingUp, User, Mail, Lock, Eye, EyeOff, Key } from 'lucide-react';
 import CommonInput from '../../components/common/CommonInput';
@@ -7,6 +7,7 @@ import CommonSelect from '../../components/common/CommonSelect';
 import CommonCard from '../../components/common/CommonCard';
 import { useAuth } from '../../hooks/useAuth';
 import { isValidEmail, isValidPassword } from '../../utils/helpers';
+import { getGroups } from '../../services/groupService';
 
 const SignupPage = () => {
   const navigate = useNavigate();
@@ -23,12 +24,34 @@ const SignupPage = () => {
   const [errors, setErrors] = useState({});
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [groupOptions, setGroupOptions] = useState([]);
+  const [groupsLoading, setGroupsLoading] = useState(true);
 
-  // Group options (can be fetched from API in production)
-  const groupOptions = [
-    { value: '1', label: 'ADMIN - Full Access' },
-    { value: '2', label: 'USER - Read Only' },
-  ];
+  // Fetch groups dynamically from backend
+  useEffect(() => {
+    const fetchGroups = async () => {
+      try {
+        setGroupsLoading(true);
+        const groups = await getGroups();
+        
+        // Transform groups API response to select options format
+        const options = groups.map(group => ({
+          value: group.id.toString(),
+          label: group.name,
+        }));
+        
+        setGroupOptions(options);
+      } catch (error) {
+        console.error('Failed to fetch groups:', error);
+        // Fallback to empty array - user will see error message
+        setGroupOptions([]);
+      } finally {
+        setGroupsLoading(false);
+      }
+    };
+
+    fetchGroups();
+  }, []);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -278,10 +301,11 @@ const SignupPage = () => {
                 value={formData.groupId}
                 onChange={handleChange}
                 label="Group"
-                placeholder="Select your group"
+                placeholder={groupsLoading ? "Loading groups..." : "Select your group"}
                 icon={Users}
                 options={groupOptions}
                 error={errors.groupId}
+                disabled={groupsLoading}
               />
 
               {/* Signup Button */}

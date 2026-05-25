@@ -46,6 +46,14 @@ public class CurrencyServiceImpl implements CurrencyService {
         return toResponse(savedCurrency);
     }
 
+    @Override
+    public void deleteCurrency(Long id) {
+        Currency currency = currencyRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Currency not found with id: " + id));
+        
+        currencyRepository.delete(currency);
+    }
+
     private CurrencyResponse toResponse(Currency currency) {
         return new CurrencyResponse(
                 currency.getId(),

@@ -107,7 +107,7 @@ public class AccountServiceImpl implements AccountService {
 
     private AccountResponse toResponse(Account account) {
         return new AccountResponse(
-                account.getId(),
+                account.getId() != null ? account.getId() : 0L,
                 account.getUser().getId(),
                 account.getAccountType().getTypeName(),
                 account.getCurrency().getCurrencyCode(),

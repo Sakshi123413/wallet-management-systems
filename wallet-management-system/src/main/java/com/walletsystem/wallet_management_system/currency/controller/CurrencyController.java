@@ -31,4 +31,10 @@ public class CurrencyController {
     public ResponseEntity<CurrencyResponse> createCurrency(@Valid @RequestBody CurrencyRequest request) {
         return ResponseEntity.ok(currencyService.createCurrency(request));
     }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteCurrency(@PathVariable Long id) {
+        currencyService.deleteCurrency(id);
+        return ResponseEntity.noContent().build();
+    }
 }

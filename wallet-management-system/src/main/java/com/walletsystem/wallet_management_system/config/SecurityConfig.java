@@ -59,8 +59,9 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**").permitAll()
-                        .requestMatchers("/api/users/**").hasAnyAuthority("READ", "ADMIN")
+                        .requestMatchers("/api/groups").permitAll()  // Allow public access to fetch groups for signup
                         .requestMatchers("/api/groups/**").hasAnyAuthority("READ", "ADMIN")
+                        .requestMatchers("/api/users/**").hasAnyAuthority("READ", "ADMIN")
                         .requestMatchers("/api/permissions/**").hasAnyAuthority("READ", "ADMIN")
                         .requestMatchers("/api/accounts/**").hasAnyAuthority("READ", "ADMIN")
                         .requestMatchers("/api/account-types/**").hasAnyAuthority("READ", "ADMIN")

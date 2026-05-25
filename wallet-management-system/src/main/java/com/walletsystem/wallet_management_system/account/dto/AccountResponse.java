@@ -3,6 +3,7 @@ package com.walletsystem.wallet_management_system.account.dto;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.lang.NonNull;
 
 import java.math.BigDecimal;
 
@@ -10,6 +11,7 @@ import java.math.BigDecimal;
 @NoArgsConstructor
 @AllArgsConstructor
 public class AccountResponse {
+    @NonNull
     private Long id;
     private Long userId;
     private String accountTypeName;

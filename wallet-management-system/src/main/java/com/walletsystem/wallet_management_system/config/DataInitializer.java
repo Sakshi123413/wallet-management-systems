@@ -5,10 +5,7 @@ import com.walletsystem.wallet_management_system.accounttype.repository.AccountT
 import com.walletsystem.wallet_management_system.currency.entity.Currency;
 import com.walletsystem.wallet_management_system.currency.repository.CurrencyRepository;
 import com.walletsystem.wallet_management_system.group.entity.Group;
-import com.walletsystem.wallet_management_system.group.entity.GroupPermission;
-import com.walletsystem.wallet_management_system.group.entity.GroupPermissionId;
 import com.walletsystem.wallet_management_system.permission.entity.Permission;
-import com.walletsystem.wallet_management_system.group.repository.GroupPermissionRepository;
 import com.walletsystem.wallet_management_system.group.repository.GroupRepository;
 import com.walletsystem.wallet_management_system.permission.repository.PermissionRepository;
 import lombok.RequiredArgsConstructor;
@@ -27,7 +24,6 @@ public class DataInitializer implements CommandLineRunner {
     private final AccountTypeRepository accountTypeRepository;
     private final PermissionRepository permissionRepository;
     private final GroupRepository groupRepository;
-    private final GroupPermissionRepository groupPermissionRepository;
 
     @Override
     public void run(String... args) {
@@ -57,41 +53,49 @@ public class DataInitializer implements CommandLineRunner {
 
     private void initializePermissions() {
         if (permissionRepository.count() == 0) {
-            permissionRepository.save(new Permission(null, "READ"));
-            permissionRepository.save(new Permission(null, "WRITE"));
-            permissionRepository.save(new Permission(null, "DELETE"));
-            permissionRepository.save(new Permission(null, "ADMIN"));
+            Permission read = new Permission();
+            read.setName("READ");
+            permissionRepository.save(read);
+            
+            Permission write = new Permission();
+            write.setName("WRITE");
+            permissionRepository.save(write);
+            
+            Permission delete = new Permission();
+            delete.setName("DELETE");
+            permissionRepository.save(delete);
+            
+            Permission admin = new Permission();
+            admin.setName("ADMIN");
+            permissionRepository.save(admin);
         }
     }
 
     private void initializeGroups() {
         if (groupRepository.count() == 0) {
-            Group adminGroup = groupRepository.save(new Group(null, "ADMIN", new HashSet<>()));
-            Group userGroup = groupRepository.save(new Group(null, "USER", new HashSet<>()));
-
-            List<Permission> permissionList = permissionRepository.findAll();
-            Set<Permission> allPermissions = new HashSet<>(permissionList);
-            Permission readPermission = permissionList.stream()
+            List<Permission> allPermissions = permissionRepository.findAll();
+            
+            // Create ADMIN group with all permissions
+            Group adminGroup = new Group();
+            adminGroup.setName("ADMIN");
+            adminGroup.setPermissions(new HashSet<>(allPermissions));
+            groupRepository.save(adminGroup);
+            
+            // Create USER group with only READ permission
+            Group userGroup = new Group();
+            userGroup.setName("USER");
+            Permission readPermission = allPermissions.stream()
                     .filter(p -> p.getName().equals("READ"))
                     .findFirst()
                     .orElse(null);
-
+            
             if (readPermission != null) {
-                assignPermissionToGroup(userGroup, readPermission);
+                Set<Permission> userPermissions = new HashSet<>();
+                userPermissions.add(readPermission);
+                userGroup.setPermissions(userPermissions);
             }
-
-            for (Permission permission : allPermissions) {
-                assignPermissionToGroup(adminGroup, permission);
-            }
+            
+            groupRepository.save(userGroup);
         }
-    }
-
-    private void assignPermissionToGroup(Group group, Permission permission) {
-        GroupPermissionId id = new GroupPermissionId(group.getId(), permission.getId());
-        GroupPermission groupPermission = new GroupPermission();
-        groupPermission.setId(id);
-        groupPermission.setGroup(group);
-        groupPermission.setPermission(permission);
-        groupPermissionRepository.save(groupPermission);
     }
 }

@@ -9,4 +9,5 @@ public interface CurrencyService {
     List<CurrencyResponse> getAllCurrencies();
     CurrencyResponse getCurrencyById(Long id);
     CurrencyResponse createCurrency(CurrencyRequest request);
+    void deleteCurrency(Long id);
 }

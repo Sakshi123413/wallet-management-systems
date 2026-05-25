@@ -7,8 +7,8 @@ import com.walletsystem.wallet_management_system.auth.service.AuthService;
 import com.walletsystem.wallet_management_system.exception.BusinessException;
 import com.walletsystem.wallet_management_system.exception.InvalidCredentialsException;
 import com.walletsystem.wallet_management_system.group.entity.Group;
-import com.walletsystem.wallet_management_system.group.repository.GroupPermissionRepository;
 import com.walletsystem.wallet_management_system.group.repository.GroupRepository;
+import com.walletsystem.wallet_management_system.permission.entity.Permission;
 import com.walletsystem.wallet_management_system.security.JwtUtil;
 import com.walletsystem.wallet_management_system.user.entity.User;
 import com.walletsystem.wallet_management_system.user.repository.UserRepository;
@@ -18,6 +18,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -27,7 +28,6 @@ public class AuthServiceImpl implements AuthService {
 
     private final UserRepository userRepository;
     private final GroupRepository groupRepository;
-    private final GroupPermissionRepository groupPermissionRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
 
@@ -82,9 +82,14 @@ public class AuthServiceImpl implements AuthService {
             return List.of("USER");
         }
 
-        return groupPermissionRepository.findByGroupId(user.getGroup().getId())
-                .stream()
-                .map(gp -> gp.getPermission().getName())
+        // Get permissions from the group's ManyToMany relationship
+        Set<Permission> permissions = user.getGroup().getPermissions();
+        if (permissions == null || permissions.isEmpty()) {
+            return List.of("USER");
+        }
+
+        return permissions.stream()
+                .map(Permission::getName)
                 .collect(Collectors.toList());
     }
 }

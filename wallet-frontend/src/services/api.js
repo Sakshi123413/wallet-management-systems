@@ -161,6 +161,11 @@ export const createCurrency = async (currencyData) => {
   return response.data;
 };
 
+export const deleteCurrency = async (id) => {
+  const response = await api.delete(`/api/currencies/${id}`);
+  return response.data;
+};
+
 // Group API calls
 export const getGroups = async () => {
   const response = await api.get('/api/groups');

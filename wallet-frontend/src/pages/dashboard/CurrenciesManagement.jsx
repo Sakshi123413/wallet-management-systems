@@ -8,10 +8,12 @@ import {
   ChevronRight,
   Globe,
   RefreshCw,
+  Trash2,
 } from 'lucide-react';
 import CommonButton from '../../components/common/CommonButton';
 import CommonCard from '../../components/common/CommonCard';
 import CurrencyFormModal from '../../components/currencies/CurrencyFormModal';
+import CurrencyDeleteModal from '../../components/currencies/CurrencyDeleteModal';
 import TableSkeleton from '../../components/users/TableSkeleton';
 import { getCurrencies } from '../../services/api';
 import { showSuccess, showError } from '../../components/common/Toast';
@@ -25,6 +27,9 @@ const CurrenciesManagement = () => {
 
   // Modal states
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [selectedCurrency, setSelectedCurrency] = useState(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
 
   useEffect(() => {
     fetchCurrencies();
@@ -53,6 +58,20 @@ const CurrenciesManagement = () => {
 
   const closeModal = () => {
     setIsFormModalOpen(false);
+  };
+
+  const openDeleteModal = (currency) => {
+    setSelectedCurrency(currency);
+    setIsDeleteModalOpen(true);
+  };
+
+  const closeDeleteModal = () => {
+    setIsDeleteModalOpen(false);
+    setSelectedCurrency(null);
+  };
+
+  const handleDeleteSuccess = () => {
+    fetchCurrencies();
   };
 
   // Filter currencies based on search
@@ -227,15 +246,18 @@ const CurrenciesManagement = () => {
                       <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                         Currency ID
                       </th>
-                      <th className="px-6 py-4 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                      <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                         Status
+                      </th>
+                      <th className="px-6 py-4 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                        Actions
                       </th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100">
                     {filteredCurrencies.length === 0 ? (
                       <tr>
-                        <td colSpan="4" className="px-6 py-12 text-center">
+                        <td colSpan="5" className="px-6 py-12 text-center">
                           <div className="text-gray-400">
                             <Globe className="w-12 h-12 mx-auto mb-3" />
                             <p className="text-lg font-medium">No currencies found</p>
@@ -288,10 +310,17 @@ const CurrenciesManagement = () => {
                               </span>
                             </td>
                             <td className="px-6 py-4">
-                              <div className="flex items-center justify-end">
+                              <div className="flex items-center justify-end gap-2">
                                 <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
                                   ✓ Active
                                 </span>
+                                <button
+                                  onClick={() => openDeleteModal(currency)}
+                                  className="p-2 rounded-lg hover:bg-red-50 text-gray-400 hover:text-red-600 transition-colors"
+                                  title="Delete Currency"
+                                >
+                                  <Trash2 className="w-5 h-5" />
+                                </button>
                               </div>
                             </td>
                           </motion.tr>
@@ -358,11 +387,18 @@ const CurrenciesManagement = () => {
         </CommonCard>
       </motion.div>
 
-      {/* Modal */}
+      {/* Modals */}
       <CurrencyFormModal
         isOpen={isFormModalOpen}
         onClose={closeModal}
         onSuccess={handleFormSuccess}
+      />
+      
+      <CurrencyDeleteModal
+        isOpen={isDeleteModalOpen}
+        onClose={closeDeleteModal}
+        currency={selectedCurrency}
+        onSuccess={handleDeleteSuccess}
       />
     </div>
   );

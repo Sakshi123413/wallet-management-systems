@@ -1,6 +1,6 @@
 package com.walletsystem.wallet_management_system.security;
 
-import com.walletsystem.wallet_management_system.group.repository.GroupPermissionRepository;
+import com.walletsystem.wallet_management_system.permission.entity.Permission;
 import com.walletsystem.wallet_management_system.user.entity.User;
 import com.walletsystem.wallet_management_system.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -19,7 +20,6 @@ import java.util.stream.Collectors;
 public class CustomUserDetailsService implements UserDetailsService {
 
     private final UserRepository userRepository;
-    private final GroupPermissionRepository groupPermissionRepository;
 
     @Override
     @Transactional(readOnly = true)
@@ -41,9 +41,14 @@ public class CustomUserDetailsService implements UserDetailsService {
             return List.of(new SimpleGrantedAuthority("USER"));
         }
 
-        return groupPermissionRepository.findByGroupId(user.getGroup().getId())
-                .stream()
-                .map(gp -> new SimpleGrantedAuthority(gp.getPermission().getName()))
+        // Get permissions from the group's ManyToMany relationship
+        Set<Permission> permissions = user.getGroup().getPermissions();
+        if (permissions == null || permissions.isEmpty()) {
+            return List.of(new SimpleGrantedAuthority("USER"));
+        }
+
+        return permissions.stream()
+                .map(permission -> new SimpleGrantedAuthority(permission.getName()))
                 .collect(Collectors.toList());
     }
 }
