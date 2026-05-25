@@ -1,7 +1,7 @@
 import { Bell, Search, Menu } from 'lucide-react';
 import { useSidebarStore } from '../../store/sidebarStore';
 
-export default function Navbar() {
+export default function Navbar({ title = 'Dashboard' }) {
   const { setMobileOpen } = useSidebarStore();
 
   return (
@@ -15,7 +15,7 @@ export default function Navbar() {
             <Menu className="w-6 h-6" />
           </button>
           <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
+            <h1 className="text-2xl font-bold text-gray-900">{title}</h1>
           </div>
         </div>
 

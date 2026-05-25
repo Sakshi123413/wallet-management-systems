@@ -4,6 +4,7 @@ import { ToastContainer } from 'react-toastify';
 import LoginPage from './pages/auth/LoginPage';
 import SignupPage from './pages/auth/SignupPage';
 import Dashboard from './pages/auth/Dashboard';
+import DashboardLayout from './components/dashboard/DashboardLayout';
 import DashboardHome from './pages/dashboard/DashboardHome';
 import UsersManagement from './pages/dashboard/UsersManagement';
 import AccountsManagement from './pages/dashboard/AccountsManagement';
@@ -65,62 +66,25 @@ function App() {
             </ProtectedRoute>
           } 
         />
+        
+        {/* Dashboard Layout with Nested Routes */}
         <Route 
-          path="/dashboard/*" 
+          path="/dashboard" 
           element={
             <ProtectedRoute>
-              <DashboardHome />
+              <DashboardLayout />
             </ProtectedRoute>
-          } 
-        />
-        <Route 
-          path="/dashboard/users" 
-          element={
-            <ProtectedRoute>
-              <UsersManagement />
-            </ProtectedRoute>
-          } 
-        />
-        <Route 
-          path="/dashboard/accounts" 
-          element={
-            <ProtectedRoute>
-              <AccountsManagement />
-            </ProtectedRoute>
-          } 
-        />
-        <Route 
-          path="/dashboard/groups" 
-          element={
-            <ProtectedRoute>
-              <GroupsManagement />
-            </ProtectedRoute>
-          } 
-        />
-        <Route 
-          path="/dashboard/permissions" 
-          element={
-            <ProtectedRoute>
-              <PermissionsManagement />
-            </ProtectedRoute>
-          } 
-        />
-        <Route 
-          path="/dashboard/account-types" 
-          element={
-            <ProtectedRoute>
-              <AccountTypesManagement />
-            </ProtectedRoute>
-          } 
-        />
-        <Route 
-          path="/dashboard/currencies" 
-          element={
-            <ProtectedRoute>
-              <CurrenciesManagement />
-            </ProtectedRoute>
-          } 
-        />
+          }
+        >
+          <Route index element={<DashboardHome />} />
+          <Route path="users" element={<UsersManagement />} />
+          <Route path="accounts" element={<AccountsManagement />} />
+          <Route path="groups" element={<GroupsManagement />} />
+          <Route path="permissions" element={<PermissionsManagement />} />
+          <Route path="account-types" element={<AccountTypesManagement />} />
+          <Route path="currencies" element={<CurrenciesManagement />} />
+        </Route>
+        
         <Route path="/" element={<Navigate to="/login" replace />} />
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
