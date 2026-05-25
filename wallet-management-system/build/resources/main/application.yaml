@@ -1,0 +1,23 @@
+spring:
+  application:
+    name: wallet-management-system
+  datasource:
+    url: jdbc:postgresql://localhost:5432/wallet_management_system
+    username: postgres
+    password: Sakshi@1406
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+
+server:
+  port: 8080
+
+jwt:
+  secret: YourSuperSecretKeyForJWTTokenGenerationMustBeLongEnoughToBeSecure2024WalletSystem
+  expiration-ms: 86400000

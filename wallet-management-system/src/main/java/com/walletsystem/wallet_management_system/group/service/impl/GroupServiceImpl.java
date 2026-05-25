@@ -50,9 +50,13 @@ public class GroupServiceImpl implements GroupService {
         group.setName(request.getName());
         
         Group savedGroup = groupRepository.save(group);
+        Long groupId = savedGroup.getId();
         
         if (request.getPermissionIds() != null && !request.getPermissionIds().isEmpty()) {
             assignPermissionsToGroup(savedGroup, request.getPermissionIds());
+            // Reload the group to get the permissions in the response
+            savedGroup = groupRepository.findById(groupId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Group not found with id: " + groupId));
         }
         
         return toResponse(savedGroup);
@@ -68,7 +72,14 @@ public class GroupServiceImpl implements GroupService {
         if (request.getPermissionIds() != null) {
             groupPermissionRepository.deleteAll(group.getGroupPermissions());
             group.getGroupPermissions().clear();
-            assignPermissionsToGroup(group, request.getPermissionIds());
+            
+            if (!request.getPermissionIds().isEmpty()) {
+                assignPermissionsToGroup(group, request.getPermissionIds());
+            }
+            
+            // Reload the group to get the updated permissions
+            group = groupRepository.findById(id)
+                    .orElseThrow(() -> new ResourceNotFoundException("Group not found with id: " + id));
         }
         
         Group updatedGroup = groupRepository.save(group);
@@ -77,9 +88,13 @@ public class GroupServiceImpl implements GroupService {
 
     @Override
     public void deleteGroup(Long id) {
-        if (!groupRepository.existsById(id)) {
-            throw new ResourceNotFoundException("Group not found with id: " + id);
-        }
+        Group group = groupRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Group not found with id: " + id));
+        
+        // Delete all group permissions first (cascade should handle this, but being explicit)
+        groupPermissionRepository.deleteAll(group.getGroupPermissions());
+        
+        // Delete the group
         groupRepository.deleteById(id);
     }
 
