@@ -21,3 +21,50 @@ server:
 jwt:
   secret: YourSuperSecretKeyForJWTTokenGenerationMustBeLongEnoughToBeSecure2024WalletSystem
   expiration-ms: 86400000
+
+# Actuator & Observability Configuration
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus,env,loggers
+  endpoint:
+    health:
+      show-details: always
+      show-components: always
+    prometheus:
+      enabled: true
+  metrics:
+    tags:
+      application: wallet-management-system
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true
+      sla:
+        http.server.requests: 50ms, 100ms, 200ms, 500ms
+  tracing:
+    sampling:
+      probability: 1.0
+
+# Logging Configuration
+logging:
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] [%X{correlationId:-}] %-5level %logger{36} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] [%X{correlationId:-}] %-5level %logger{36} - %msg%n"
+  level:
+    root: INFO
+    com.walletsystem.wallet_management_system: DEBUG
+    org.springframework.security: INFO
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+  file:
+    name: logs/wallet-management-system.log
+
+# Application Info
+info:
+  app:
+    name: Wallet Management System
+    description: Enterprise RBAC Wallet Management System
+    version: 1.0.0
+    java:
+      version: ${java.version}
