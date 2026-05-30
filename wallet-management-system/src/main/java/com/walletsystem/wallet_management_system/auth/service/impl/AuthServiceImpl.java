@@ -59,7 +59,8 @@ public class AuthServiceImpl implements AuthService {
         String token = jwtUtil.generateToken(user.getEmail(), roles);
 
         log.info("User signup successful: email={}, userId={}", request.getEmail(), user.getId());
-        return new LoginResponse(token, user.getId(), user.getEmail(), user.getName());
+        return new LoginResponse(token, user.getId(), user.getEmail(), user.getName(), 
+                user.getGroup() != null ? user.getGroup().getName() : "USER");
     }
 
     @Override
@@ -76,9 +77,11 @@ public class AuthServiceImpl implements AuthService {
 
         List<String> roles = getUserRoles(user);
         String token = jwtUtil.generateToken(user.getEmail(), roles);
-
-        log.info("User login successful: email={}, userId={}", request.getEmail(), user.getId());
-        return new LoginResponse(token, user.getId(), user.getEmail(), user.getName());
+        
+        String groupName = user.getGroup() != null ? user.getGroup().getName() : "USER";
+        log.info("User login successful: email={}, userId={}, groupName={}", request.getEmail(), user.getId(), groupName);
+        
+        return new LoginResponse(token, user.getId(), user.getEmail(), user.getName(), groupName);
     }
 
     @Override

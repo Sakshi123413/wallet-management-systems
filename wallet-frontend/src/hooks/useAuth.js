@@ -52,6 +52,7 @@ export const useAuth = () => {
         userId: response.userId,
         email: response.email,
         name: response.name,
+        groupName: response.groupName,
       });
 
       showSuccess(`Welcome, ${response.name}! Your account has been created successfully.`);
