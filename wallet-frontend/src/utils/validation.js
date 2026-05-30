@@ -18,9 +18,7 @@ export const userSchema = z.object({
   groupId: z
     .number()
     .int('Group ID must be an integer')
-    .positive('Group ID must be a positive number')
-    .optional()
-    .nullable(),
+    .positive('Group ID must be a positive number'),
 });
 
 export const userUpdateSchema = userSchema.partial().extend({

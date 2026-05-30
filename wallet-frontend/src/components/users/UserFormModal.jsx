@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, User, Mail, Lock, Shield } from 'lucide-react';
+import { X, User, Mail, Lock, Shield, Loader2 } from 'lucide-react';
 import CommonInput from '../common/CommonInput';
 import CommonButton from '../common/CommonButton';
 import { validateUser, validateUserUpdate } from '../../utils/validation';
-import { createUser, updateUser } from '../../services/api';
+import { createUser, updateUser, getGroups } from '../../services/api';
 import { showSuccess, showError } from '../common/Toast';
 
 const UserFormModal = ({ isOpen, onClose, user, onSuccess }) => {
@@ -12,12 +12,21 @@ const UserFormModal = ({ isOpen, onClose, user, onSuccess }) => {
     name: '',
     email: '',
     password: '',
-    groupId: 2, // Default to USER group
+    groupId: null,
   });
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
+  const [groups, setGroups] = useState([]);
+  const [groupsLoading, setGroupsLoading] = useState(false);
+  const [groupsError, setGroupsError] = useState(false);
 
   const isEditMode = !!user;
+
+  useEffect(() => {
+    if (isOpen) {
+      fetchGroups();
+    }
+  }, [isOpen]);
 
   useEffect(() => {
     if (user) {
@@ -25,22 +34,46 @@ const UserFormModal = ({ isOpen, onClose, user, onSuccess }) => {
         name: user.name || '',
         email: user.email || '',
         password: '',
-        groupId: user.groupId || 2,
+        groupId: user.groupId || null,
       });
     } else {
       setFormData({
         name: '',
         email: '',
         password: '',
-        groupId: 2,
+        groupId: groups.length > 0 ? groups[0].id : null,
       });
     }
     setErrors({});
-  }, [user, isOpen]);
+  }, [user, isOpen, groups]);
+
+  const fetchGroups = async () => {
+    try {
+      setGroupsLoading(true);
+      setGroupsError(false);
+      const data = await getGroups();
+      setGroups(data);
+      // Set default group to first available group if creating new user
+      if (!user && data.length > 0) {
+        setFormData((prev) => ({
+          ...prev,
+          groupId: prev.groupId || data[0].id,
+        }));
+      }
+    } catch (error) {
+      console.error('Failed to fetch groups:', error);
+      setGroupsError(true);
+      showError('Failed to load user groups');
+    } finally {
+      setGroupsLoading(false);
+    }
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    // Convert groupId to number for proper validation
+    const processedValue = name === 'groupId' ? parseInt(value, 10) : value;
+    setFormData((prev) => ({ ...prev, [name]: processedValue }));
     if (errors[name]) {
       setErrors((prev) => ({ ...prev, [name]: '' }));
     }
@@ -52,6 +85,7 @@ const UserFormModal = ({ isOpen, onClose, user, onSuccess }) => {
       : validateUser(formData);
 
     if (!validation.success) {
+      console.error('Validation failed:', validation.error.errors);
       const fieldErrors = {};
       validation.error.errors.forEach((err) => {
         fieldErrors[err.path[0]] = err.message;
@@ -100,7 +134,7 @@ const UserFormModal = ({ isOpen, onClose, user, onSuccess }) => {
   };
 
   const handleClose = () => {
-    setFormData({ name: '', email: '', password: '', groupId: 2 });
+    setFormData({ name: '', email: '', password: '', groupId: null });
     setErrors({});
     onClose();
   };
@@ -182,15 +216,43 @@ const UserFormModal = ({ isOpen, onClose, user, onSuccess }) => {
                       User Group
                     </div>
                   </label>
-                  <select
-                    name="groupId"
-                    value={formData.groupId}
-                    onChange={handleChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all bg-white"
-                  >
-                    <option value={1}>ADMIN</option>
-                    <option value={2}>USER</option>
-                  </select>
+                  {groupsLoading ? (
+                    <div className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 flex items-center gap-2">
+                      <Loader2 className="w-4 h-4 animate-spin text-gray-500" />
+                      <span className="text-sm text-gray-500">Loading groups...</span>
+                    </div>
+                  ) : groupsError ? (
+                    <div className="w-full px-4 py-3 border border-red-300 rounded-lg bg-red-50">
+                      <p className="text-sm text-red-600">Failed to load groups</p>
+                      <button
+                        type="button"
+                        onClick={fetchGroups}
+                        className="text-sm text-red-600 underline mt-1 hover:text-red-700"
+                      >
+                        Retry
+                      </button>
+                    </div>
+                  ) : groups.length === 0 ? (
+                    <div className="w-full px-4 py-3 border border-yellow-300 rounded-lg bg-yellow-50">
+                      <p className="text-sm text-yellow-700">No groups available</p>
+                      <p className="text-xs text-yellow-600 mt-1">Please create a group first in Groups Management</p>
+                    </div>
+                  ) : (
+                    <select
+                      name="groupId"
+                      value={formData.groupId || ''}
+                      onChange={handleChange}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all bg-white"
+                      required
+                    >
+                      <option value="" disabled>Select a group</option>
+                      {groups.map((group) => (
+                        <option key={group.id} value={group.id}>
+                          {group.name}
+                        </option>
+                      ))}
+                    </select>
+                  )}
                   {errors.groupId && (
                     <p className="mt-1 text-sm text-red-600">{errors.groupId}</p>
                   )}

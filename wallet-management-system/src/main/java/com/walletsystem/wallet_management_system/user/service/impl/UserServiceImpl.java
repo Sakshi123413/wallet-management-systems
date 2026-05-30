@@ -114,6 +114,7 @@ public class UserServiceImpl implements UserService {
                 user.getId(),
                 user.getName(),
                 user.getEmail(),
+                user.getGroup() != null ? user.getGroup().getId() : null,
                 user.getGroup() != null ? user.getGroup().getName() : null
         );
     }

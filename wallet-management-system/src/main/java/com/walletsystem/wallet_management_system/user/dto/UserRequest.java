@@ -18,7 +18,7 @@ public class UserRequest {
     @Email(message = "Email should be valid")
     private String email;
 
-    @NotBlank(message = "Password is required")
+    // Password is required for create, optional for update (validated in service layer)
     private String password;
 
     private Long groupId;
