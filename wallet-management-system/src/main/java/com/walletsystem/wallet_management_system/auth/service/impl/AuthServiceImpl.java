@@ -13,6 +13,7 @@ import com.walletsystem.wallet_management_system.security.JwtUtil;
 import com.walletsystem.wallet_management_system.user.entity.User;
 import com.walletsystem.wallet_management_system.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,6 +22,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -33,7 +35,10 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public LoginResponse signup(SignupRequest request) {
+        log.info("User signup attempt: email={}", request.getEmail());
+        
         if (userRepository.existsByEmail(request.getEmail())) {
+            log.warn("Signup failed - email already exists: {}", request.getEmail());
             throw new BusinessException("Email already exists: " + request.getEmail());
         }
 
@@ -53,21 +58,26 @@ public class AuthServiceImpl implements AuthService {
         List<String> roles = getUserRoles(user);
         String token = jwtUtil.generateToken(user.getEmail(), roles);
 
+        log.info("User signup successful: email={}, userId={}", request.getEmail(), user.getId());
         return new LoginResponse(token, user.getId(), user.getEmail(), user.getName());
     }
 
     @Override
     public LoginResponse login(LoginRequest request) {
+        log.info("User login attempt: email={}", request.getEmail());
+        
         User user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new InvalidCredentialsException("Invalid email or password"));
 
         if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
+            log.warn("Login failed - invalid password for email: {}", request.getEmail());
             throw new InvalidCredentialsException("Invalid email or password");
         }
 
         List<String> roles = getUserRoles(user);
         String token = jwtUtil.generateToken(user.getEmail(), roles);
 
+        log.info("User login successful: email={}, userId={}", request.getEmail(), user.getId());
         return new LoginResponse(token, user.getId(), user.getEmail(), user.getName());
     }
 

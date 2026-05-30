@@ -58,8 +58,16 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
+                        // Public API endpoints
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/api/groups").permitAll()  // Allow public access to fetch groups for signup
+                        // Public Actuator endpoints (MUST come before /actuator/**)
+                        .requestMatchers("/actuator/health").permitAll()
+                        .requestMatchers("/actuator/info").permitAll()
+                        .requestMatchers("/actuator/prometheus").permitAll()
+                        // Protected Actuator endpoints
+                        .requestMatchers("/actuator/**").hasAuthority("ADMIN")
+                        // Protected API endpoints
                         .requestMatchers("/api/groups/**").hasAnyAuthority("READ", "ADMIN")
                         .requestMatchers("/api/users/**").hasAnyAuthority("READ", "ADMIN")
                         .requestMatchers("/api/permissions/**").hasAnyAuthority("READ", "ADMIN")
